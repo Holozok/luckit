@@ -1,6 +1,6 @@
 import { md5 } from 'js-md5';
-import { isPermissionGranted, requestPermission, sendNotification, onAction } from '@tauri-apps/plugin-notification';
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import { isPermissionGranted, requestPermission, sendNotification, onAction, registerActionTypes } from '@tauri-apps/plugin-notification';
+import { invoke } from '@tauri-apps/api/core';
 import { API } from '../services/api';
 import { SavedMomentType } from '../types/moments';
 import { UserType } from '../types/user';
@@ -48,7 +48,7 @@ async function pushSystemNotification(moment: SavedMomentType): Promise<void> {
             ? moment.caption
             : hasVideo ? 'Sent a new video moment' : 'Sent a new moment';
 
-        sendNotification({ title, body });
+        sendNotification({ title, body, actionTypeId: 'moment-click' });
     } catch {
         // silently ignore notification errors
     }
@@ -144,11 +144,10 @@ export async function logout(): Promise<void> {
 export function startMomentPolling(): void {
     if (!actionHandlerRegistered) {
         actionHandlerRegistered = true;
+        registerActionTypes([{ id: 'moment-click', actions: [] }]).catch(() => {});
         onAction(async () => {
             try {
-                const win = getCurrentWindow();
-                await win.show();
-                await win.setFocus();
+                await invoke('show_main_window');
             } catch { /* ignore */ }
         }).catch(() => {});
     }

@@ -18,6 +18,7 @@ import UploaderScreen from "./Uploader";
 import { clearMoments, fetchLatestMoment, logout } from "../lib/momentService";
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile } from "@tauri-apps/plugin-fs";
+import { fetch } from "@tauri-apps/plugin-http";
 
 const menuItemClassName = ({ hover }: { hover: boolean }) =>
     clsx(cls.MenuItem, hover && cls.hover);
@@ -60,7 +61,7 @@ export default function GlobalScreen() {
             });
             if (!savePath) return;
 
-            const response = await fetch(url);
+            const response = await fetch(url, { method: 'GET' });
             const buffer = await response.arrayBuffer();
             await writeFile(savePath, new Uint8Array(buffer));
         } catch { /* empty */ }
