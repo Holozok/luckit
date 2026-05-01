@@ -4,53 +4,63 @@ import LoadingScreen from "./screens/Loading";
 import { MainContext } from "./MainContext";
 import { UserType } from "./types/user";
 import GlobalScreen from "./screens/Global";
+import { storeGet } from "./lib/store";
+import { onLogout, onNewMoment, startMomentPolling, stopMomentPolling } from "./lib/momentService";
+import { SavedMomentType } from "./types/moments";
 
 function Popup() {
     const [loggedIn, setLoggedIn] = useState(false);
     const [loading, setLoading] = useState(true);
     const [userData, setUserData] = useState<UserType | null>(null);
-
-    const handleUserState = () => {
-        chrome.storage.local.get(['token', 'user'], (result) => {
-            if (result.token && result.user) {
-                setUserData(result.user as UserType);
-                setLoggedIn(true);
-            }
-            setLoading(false);
-        });
-    }
+    const [moments, setMoments] = useState<SavedMomentType[]>([]);
 
     useEffect(() => {
-        handleUserState();
+        const init = async () => {
+            const token = await storeGet<string>('token');
+            const user = await storeGet<UserType>('user');
+            const saved = (await storeGet<SavedMomentType[]>('moments')) ?? [];
 
-        chrome.storage.onChanged.addListener((changes, namespace) => {
-            if (namespace === 'local') {
-                if (changes.token && changes.user) {
-                    setUserData(changes.user.newValue as UserType);
-                    setLoggedIn(true);
-                }
+            if (token && user) {
+                setUserData(user);
+                setMoments(saved);
+                setLoggedIn(true);
+                startMomentPolling();
             }
+            setLoading(false);
+        };
+
+        init();
+
+        const unsubMoment = onNewMoment((m) => setMoments(m));
+        const unsubLogout = onLogout(() => {
+            setLoggedIn(false);
+            setUserData(null);
+            setMoments([]);
+            stopMomentPolling();
         });
 
-        chrome.runtime.onMessage.addListener((message) => {
-            if (message.logout) {
-                setLoggedIn(false);
-                setUserData(null);
-                return;
-            }
-
-            if (message.login) {
-                handleUserState();
-            }
-        });
-
+        return () => {
+            unsubMoment();
+            unsubLogout();
+            stopMomentPolling();
+        };
     }, []);
 
+    const handleLogin = async (user: UserType) => {
+        const saved = (await storeGet<SavedMomentType[]>('moments')) ?? [];
+        setUserData(user);
+        setMoments(saved);
+        setLoggedIn(true);
+        startMomentPolling();
+    };
+
     return (
-        <MainContext.Provider value={{ loggedIn, setLoggedIn, loading, setLoading, userData, setUserData }}>
-            {!loggedIn && !loading && <LoginScreen />}
-            {loggedIn && !loading && <GlobalScreen />}
-            {loading && <LoadingScreen />}
+        <MainContext.Provider value={{ loggedIn, setLoggedIn, loading, setLoading, userData, setUserData, moments, setMoments, handleLogin }}>
+            <div className="app-root">
+                {!loggedIn && !loading && <LoginScreen />}
+                {loggedIn && !loading && <GlobalScreen />}
+                {loading && <LoadingScreen />}
+            </div>
         </MainContext.Provider>
     )
 }

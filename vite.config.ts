@@ -1,29 +1,31 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
-import { crx } from '@crxjs/vite-plugin'
-import manifest from './manifest.json'
-import { ViteMinifyPlugin } from 'vite-plugin-minify';
 
-// https://vite.dev/config/
+const host = process.env.TAURI_DEV_HOST;
+
 export default defineConfig({
-  plugins: [
-    react(),
-    // @ts-expect-error why?
-    crx({ manifest }),
-    ViteMinifyPlugin({
-      ignoreCustomComments: []
-    })
-  ],
+  plugins: [react()],
+  clearScreen: false,
+  server: {
+    port: 5173,
+    strictPort: true,
+    host: host || false,
+    hmr: host
+      ? {
+          protocol: 'ws',
+          host,
+          port: 5183,
+        }
+      : undefined,
+    watch: {
+      ignored: ['**/src-tauri/**'],
+    },
+  },
   build: {
-    cssCodeSplit: false,
-    minify: "terser",
-    terserOptions: {
-      parse: {
-        html5_comments: false,
-      },
-      format: {
-        comments: false
-      }
-    }
-  }
+    target: process.env.TAURI_ENV_PLATFORM === 'windows'
+      ? 'chrome105'
+      : 'safari13',
+    minify: !process.env.TAURI_ENV_DEBUG ? 'esbuild' : false,
+    sourcemap: !!process.env.TAURI_ENV_DEBUG,
+  },
 })

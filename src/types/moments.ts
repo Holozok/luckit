@@ -9,6 +9,7 @@ export interface Datum {
     canonical_uid: string;
     user: string;
     thumbnail_url: string;
+    video_url?: string;
     date: DateClass;
     caption: string;
     overlays: Overlay[];
@@ -46,9 +47,10 @@ export interface SavedMomentType {
         username: string;
         avatar: string;
         uid: string;
-    },
+    };
     md5: string;
     thumbnail_url: string;
+    video_url?: string;
     seconds: number;
     caption: string;
 }

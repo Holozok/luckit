@@ -9,6 +9,8 @@ import { useMainContext } from "../MainContext";
 import { VscClose } from "react-icons/vsc";
 import { UserType } from "../types/user";
 import PhoneNumberInput from "../components/PhoneNumber";
+import { storeSet } from "../lib/store";
+
 export default function LoginScreen() {
     const mainCtx = useMainContext();
     const [email, setEmail] = useState("");
@@ -57,7 +59,6 @@ export default function LoginScreen() {
 
                 if (res.token) {
                     const exchange = await API.exchangeOTPTokenForIDToken(res.token);
-
                     const user = await API.getAccountInfo(exchange.idToken);
 
                     if (!user.users[0]) {
@@ -66,14 +67,10 @@ export default function LoginScreen() {
                         return;
                     }
 
-                    chrome.storage.local.set({
-                        token: exchange.idToken,
-                        refreshToken: exchange.refreshToken,
-                        user: user.users[0] as UserType
-                    }, () => {
-                        chrome.runtime.sendMessage({ fetchLatestMoment: true, login: true });
-                        mainCtx.setLoggedIn(true);
-                    });
+                    await storeSet('token', exchange.idToken);
+                    await storeSet('refreshToken', exchange.refreshToken);
+                    await storeSet('user', user.users[0] as UserType);
+                    await mainCtx.handleLogin(user.users[0] as UserType);
                     return;
                 }
 
@@ -101,14 +98,10 @@ export default function LoginScreen() {
                     return;
                 }
 
-                chrome.storage.local.set({
-                    token: res.idToken,
-                    refreshToken: res.refreshToken,
-                    user: user.users[0] as UserType
-                }, () => {
-                    chrome.runtime.sendMessage({ fetchLatestMoment: true, login: true });
-                    mainCtx.setLoggedIn(true);
-                });
+                await storeSet('token', res.idToken);
+                await storeSet('refreshToken', res.refreshToken);
+                await storeSet('user', user.users[0] as UserType);
+                await mainCtx.handleLogin(user.users[0] as UserType);
                 return;
             }
             setError("Unable to login!");
@@ -136,11 +129,11 @@ export default function LoginScreen() {
             <div className={clsx(cls.LoginWarn)}>
                 <div className={cls.Content}>
                     <h1>Before you proceed...</h1>
-                    <p>This project is not affiliated with Locket or Locket Labs, Inc in any way. By using this extension, you acknowledge that it is an unofficial Locket client, and you accept the risk that your account may be banned.
+                    <p>This project is not affiliated with Locket or Locket Labs, Inc in any way. By using this app, you acknowledge that it is an unofficial Locket client, and you accept the risk that your account may be banned.
                         <br />
-                        If you are unsure about this or you don't know what you are doing, please refrain from using this extension.
+                        If you are unsure about this or you don't know what you are doing, please refrain from using this app.
                         <br />
-                        I (luckit's creator) will not be held responsible for any consequences.</p>
+                        The creator will not be held responsible for any consequences.</p>
                     <button
                         onClick={handleLogin}
                         className={clsx("btn")}>

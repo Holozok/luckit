@@ -83,6 +83,59 @@
                     background-size: cover;
                     background-position: center;
 
+                    .VideoWrap {
+                        position: absolute;
+                        inset: 0;
+                        border-radius: 20px;
+                        overflow: hidden;
+                        cursor: pointer;
+                        z-index: 1;
+
+                        &:hover .PlayOverlay {
+                            opacity: 1;
+                        }
+                    }
+
+                    .Video {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        display: block;
+                    }
+
+                    .PlayOverlay {
+                        position: absolute;
+                        inset: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 52px;
+                        color: #ffffffcc;
+                        opacity: 0;
+                        transition: opacity 0.2s;
+                        background: #00000030;
+
+                        &.visible {
+                            opacity: 1;
+                        }
+                    }
+
+                    .VideoBadge {
+                        position: absolute;
+                        top: 0.6rem;
+                        left: 0.7rem;
+                        background: #000000aa;
+                        backdrop-filter: blur(6px);
+                        border-radius: 20px;
+                        padding: 0.2rem 0.6rem;
+                        font-size: 11px;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.3rem;
+                        z-index: 2;
+                        color: #eee;
+                    }
+
                     .Caption {
                         width: fit-content;
                         padding: 0.5rem 1rem;

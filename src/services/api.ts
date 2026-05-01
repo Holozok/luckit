@@ -1,6 +1,7 @@
 import { ExchangeCustomTokenPayloadType, ExchangeCustomTokenResponseType, LoginPayloadType, LoginResponseType, RefreshTokenPayloadType, RefreshTokenResponseType, RequestPhoneOTPResponseType, VerifyPhoneOTPResponseType } from "../types/auth"
 import { MomentType } from "../types/moments"
 import { GetAccountInfoResponseType, UserInfoType } from "../types/user"
+import { storeGet } from "../lib/store"
 
 export type ResponseError<T> = {
     error: T
@@ -81,17 +82,9 @@ export async function fetchLocket<Response>({
 
     headers.append('Content-Type', 'application/json');
 
-    if (token) {
-        headers.append('Authorization', `Bearer ${token}`);
-    } else {
-        await new Promise((res) => {
-            chrome.storage.local.get("token", (data) => {
-                if (data.token)
-                    headers.append('Authorization', `Bearer ${data.token}`);
-
-                res(null);
-            });
-        });
+    const authToken = token ?? await storeGet<string>('token');
+    if (authToken) {
+        headers.append('Authorization', `Bearer ${authToken}`);
     }
 
     return new Promise<Response>((res, rej) => {

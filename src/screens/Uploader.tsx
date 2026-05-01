@@ -5,9 +5,11 @@ import { MdOutlineImage } from 'react-icons/md';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { VscClose } from 'react-icons/vsc';
 import Spinner from '../components/Spinner';
-import { UserType } from '../types/user';
 import { API } from '../services/api';
 import { randomString } from '../utils/string';
+import { storeGet, storeSet } from '../lib/store';
+import { fetch } from '@tauri-apps/plugin-http';
+import { UserType } from '../types/user';
 
 export default function UploaderScreen() {
     const [file, setFile] = useState<null | File>(null);
@@ -32,77 +34,75 @@ export default function UploaderScreen() {
         if (!fileBuffer) return;
         setLoading(true);
 
-        let userId = "", token = "", refreshToken = "";
-        const imageName = randomString(20) + ".webp";
+        const user = await storeGet<UserType>('user');
+        let token = await storeGet<string>('token');
+        let refreshTokenStr = await storeGet<string>('refreshToken');
 
-        if (await new Promise((ok) => {
-            chrome.storage.local.get(['user', 'token', 'refreshToken'], (result) => {
-                if (result.user) {
-                    userId = (result.user as UserType).localId;
-                    token = result.token;
-                    refreshToken = result.refreshToken;
-                    ok(true);
-                    return;
-                }
-                ok(false);
-            });
-        }) === false) {
+        if (!user || !token || !refreshTokenStr) {
             setError("Error getting user info");
             setLoading(false);
             return;
         }
 
+        const userId = user.localId;
+        const imageName = randomString(20) + ".webp";
+
         try {
-            const newToken = (await API.refreshToken(refreshToken));
-            if (!newToken) {
-                setError("Error refreshing token");
+            let newToken;
+            try {
+                newToken = await API.refreshToken(refreshTokenStr);
+                if (!newToken) throw new Error("null response");
+            } catch (e: any) {
+                setError(`[1] refresh token failed: ${e?.error?.message ?? e?.message ?? JSON.stringify(e)}`);
                 setLoading(false);
                 return;
             }
 
             token = newToken.id_token;
-            refreshToken = newToken.refresh_token;
+            refreshTokenStr = newToken.refresh_token;
+            await storeSet('token', token);
+            await storeSet('refreshToken', refreshTokenStr);
 
-            const gatherinbgUploadEnpoint = await fetch(`https://firebasestorage.googleapis.com/v0/b/locket-img/o/users%2F${userId}%2Fmoments%2Fthumbnails%2F${imageName}?uploadType=resumable&name=users%2F${userId}%2Fmoments%2Fthumbnails%2F${imageName}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json; charset=UTF-8",
-                    Accept: "application/json",
-                    "X-Goog-Upload-Protocol": "resumable",
-                    "X-Goog-Upload-Content-Length": fileBuffer.size.toString(),
-                    "X-Firebase-Storage-Version": "ios/10.28.1",
-                    "User-Agent": "com.locket.Locket/1.43.1 iPhone/18.1 hw/iPhone15_3 (GTMSUF/1)",
-                    "X-Goog-Upload-Content-Type": "image/webp",
-                    "X-Goog-Upload-Command": "start",
-                    "X-Firebase-Gmpid": "1:641029076083:ios:cc8eb46290d69b234fa609",
-                },
-                method: "POST",
-                body: JSON.stringify({
-                    name: `users/${userId}/moments/thumbnails/${imageName}`,
-                    contentType: "image/webp",
-                    bucket: "",
-                    metadata: {
-                        creator: userId,
-                        visibility: "private"
-                    }
-                })
-            });
+            const initResp = await fetch(
+                `https://firebasestorage.googleapis.com/v0/b/locket-img/o/users%2F${userId}%2Fmoments%2Fthumbnails%2F${imageName}?uploadType=resumable&name=users%2F${userId}%2Fmoments%2Fthumbnails%2F${imageName}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json; charset=UTF-8",
+                        Accept: "application/json",
+                        "X-Goog-Upload-Protocol": "resumable",
+                        "X-Goog-Upload-Content-Length": fileBuffer.size.toString(),
+                        "X-Firebase-Storage-Version": "ios/10.28.1",
+                        "User-Agent": "com.locket.Locket/1.43.1 iPhone/18.1 hw/iPhone15_3 (GTMSUF/1)",
+                        "X-Goog-Upload-Content-Type": "image/webp",
+                        "X-Goog-Upload-Command": "start",
+                        "X-Firebase-Gmpid": "1:641029076083:ios:cc8eb46290d69b234fa609",
+                    },
+                    method: "POST",
+                    body: JSON.stringify({
+                        name: `users/${userId}/moments/thumbnails/${imageName}`,
+                        contentType: "image/webp",
+                        bucket: "",
+                        metadata: { creator: userId, visibility: "private" }
+                    })
+                }
+            );
 
-            if (!gatherinbgUploadEnpoint.ok) {
-                setError("Failed to upload (server error)");
+            if (!initResp.ok) {
+                const body = await initResp.text().catch(() => "");
+                setError(`[2] init upload failed ${initResp.status}: ${body.slice(0, 120)}`);
                 setLoading(false);
                 return;
             }
 
-            const uploadEnpoint = gatherinbgUploadEnpoint.headers.get("X-Goog-Upload-URL");
-
-            if (!uploadEnpoint) {
-                setError("Failed to upload (invalid enpoint)");
+            const uploadEndpoint = initResp.headers.get("X-Goog-Upload-URL");
+            if (!uploadEndpoint) {
+                setError("[3] no upload URL in response headers");
                 setLoading(false);
                 return;
             }
 
-            const uploadImage = await fetch(uploadEnpoint, {
+            const uploadResp = await fetch(uploadEndpoint, {
                 headers: {
                     "Content-Type": "application/octet-stream",
                     "X-Goog-Upload-Command": "upload, finalize",
@@ -115,14 +115,15 @@ export default function UploaderScreen() {
                 body: fileBuffer
             });
 
-            if (!uploadImage.ok) {
-                setError("Failed to upload (server error)");
+            if (!uploadResp.ok) {
+                const body = await uploadResp.text().catch(() => "");
+                setError(`[4] PUT upload failed ${uploadResp.status}: ${body.slice(0, 120)}`);
                 setLoading(false);
                 return;
             }
 
             const endUrl = `https://firebasestorage.googleapis.com/v0/b/locket-img/o/users%2F${userId}%2Fmoments%2Fthumbnails%2F${imageName}`;
-            const getUrl = await fetch(endUrl, {
+            const getUrlResp = await fetch(endUrl, {
                 method: "GET",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -132,26 +133,27 @@ export default function UploaderScreen() {
                 }
             });
 
-            if (!getUrl.ok) {
-                setError("Failed to fetch image URL");
+            if (!getUrlResp.ok) {
+                const body = await getUrlResp.text().catch(() => "");
+                setError(`[5] get URL failed ${getUrlResp.status}: ${body.slice(0, 120)}`);
                 setLoading(false);
                 return;
             }
 
-            const imgToken = (await getUrl.json()).downloadTokens;
-
+            const urlJson = await getUrlResp.json();
+            const imgToken = urlJson.downloadTokens;
             if (!imgToken) {
-                setError("Failed to fetch image URL");
+                setError(`[6] no downloadTokens in response: ${JSON.stringify(urlJson).slice(0, 120)}`);
                 setLoading(false);
                 return;
             }
 
             const finalImageUrl = endUrl + "?alt=media&token=" + imgToken;
-
-            const createPost = await API.createPost(finalImageUrl, caption);
-
-            if (!createPost) {
-                setError("Failed to post");
+            try {
+                const createPost = await API.createPost(finalImageUrl, caption, token);
+                if (!createPost) throw new Error("null response");
+            } catch (e: any) {
+                setError(`[7] post failed: ${e?.error?.message ?? e?.message ?? JSON.stringify(e)}`);
                 setLoading(false);
                 return;
             }
@@ -160,8 +162,7 @@ export default function UploaderScreen() {
             setLoading(false);
             handleCancel();
         } catch (e: any) {
-            console.error(e);
-            setError("Failed to upload, check details");
+            setError(`[0] ${e?.message ?? JSON.stringify(e)}`);
             setLoading(false);
         }
     }, [caption, fileBuffer]);
@@ -170,7 +171,6 @@ export default function UploaderScreen() {
         if (fileBuffer) {
             return URL.createObjectURL(fileBuffer);
         }
-
         return "";
     }, [fileBuffer]);
 

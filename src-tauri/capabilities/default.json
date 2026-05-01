@@ -1,0 +1,27 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for the main window",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "store:allow-get",
+    "store:allow-set",
+    "store:allow-save",
+    "store:allow-delete",
+    "store:allow-load",
+    "dialog:allow-save",
+    "fs:allow-write-file",
+    "fs:scope-home-recursive",
+    "fs:scope-download-recursive",
+    "notification:default",
+    "notification:allow-register-action-types",
+    "notification:allow-register-listener",
+    {
+      "identifier": "http:default",
+      "allow": [
+        { "url": "https://**" }
+      ]
+    }
+  ]
+}
