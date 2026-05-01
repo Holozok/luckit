@@ -1,3 +1,4 @@
+use std::sync::Mutex;
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -6,9 +7,31 @@ use tauri::{
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_autostart::ManagerExt;
 
+struct AotState(Mutex<bool>);
+
+#[tauri::command]
+fn show_main_window(app: tauri::AppHandle, state: tauri::State<AotState>) {
+    let aot_was_on = *state.0.lock().unwrap();
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.set_always_on_top(true);
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+        if !aot_was_on {
+            let window_clone = window.clone();
+            std::thread::spawn(move || {
+                std::thread::sleep(std::time::Duration::from_millis(300));
+                let _ = window_clone.set_always_on_top(false);
+            });
+        }
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .manage(AotState(Mutex::new(true)))
+        .invoke_handler(tauri::generate_handler![show_main_window])
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -49,6 +72,7 @@ pub fn run() {
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
+                .menu_on_left_click(false)
                 .on_menu_event(move |app, event| match event.id.as_ref() {
                     "quit" => {
                         app.exit(0);
@@ -69,6 +93,7 @@ pub fn run() {
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.set_always_on_top(checked);
                         }
+                        *app.state::<AotState>().0.lock().unwrap() = checked;
                     }
                     "autostart" => {
                         let checked = autostart_for_handler.is_checked().unwrap_or(false);
@@ -95,8 +120,12 @@ pub fn run() {
                     {
                         let app = tray.app_handle();
                         if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
+                            if window.is_visible().unwrap_or(false) {
+                                let _ = window.hide();
+                            } else {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
                         }
                     }
                 })

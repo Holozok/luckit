@@ -1,50 +1,120 @@
+import { useState, useEffect } from "react";
 import LuckitLogo from "../components/Logo";
-import WhatIcon from "../components/WhatIcon";
 import { VERSION } from "../const";
 import cls from "./About.module.scss";
+import { MdOutlineNotifications, MdOutlineFileUpload, MdOutlineFileDownload, MdOutlinePhotoLibrary } from "react-icons/md";
+import { TbBrandGithub } from "react-icons/tb";
+import { RiPushpinLine } from "react-icons/ri";
+import { fetch } from "@tauri-apps/plugin-http";
+
+const features = [
+    { icon: <MdOutlineNotifications />, label: "System notification on new moments" },
+    { icon: <RiPushpinLine />, label: "Always-on-top widget, bottom-left corner" },
+    { icon: <MdOutlinePhotoLibrary />, label: "Browse & save moments locally" },
+    { icon: <MdOutlineFileUpload />, label: "Upload photos to Locket" },
+    { icon: <MdOutlineFileDownload />, label: "Download moments to your device" },
+];
+
+function isNewer(latest: string, current: string): boolean {
+    const parse = (v: string) => v.replace(/^v/, "").split(".").map(Number);
+    const [la, lb, lc] = parse(latest);
+    const [ca, cb, cc] = parse(current);
+    if (la !== ca) return la > ca;
+    if (lb !== cb) return lb > cb;
+    return lc > cc;
+}
 
 export default function AboutScreen() {
+    const [latestVersion, setLatestVersion] = useState<string | null>(null);
+    const [checking, setChecking] = useState(true);
+
+    useEffect(() => {
+        fetch("https://api.github.com/repos/Holozok/luckit/releases/latest", {
+            method: "GET",
+            headers: { Accept: "application/vnd.github+json" },
+        })
+            .then((r) => r.json() as Promise<{ tag_name?: string }>)
+            .then((data) => {
+                if (data.tag_name) setLatestVersion(data.tag_name);
+            })
+            .catch(() => {})
+            .finally(() => setChecking(false));
+    }, []);
+
+    const hasUpdate = latestVersion !== null && isNewer(latestVersion, VERSION);
+
     return (
         <div className={cls.About}>
-            <div className={cls.Intro}>
-                <div className={cls.Logo}>
+            <div className={cls.Header}>
+                <div className={cls.LogoWrap}>
                     <LuckitLogo />
                 </div>
-                <div className={cls.Title}>
-                    <h1>luckit</h1>
-                    <p>
-                        an unofficial Locket extension to show live photos from your friends.
-                    </p>
-                    <p className={cls.Version}>
-                        version: {VERSION}
-                    </p>
-                </div>
+                <h1>luckit</h1>
+                <span className={cls.Badge}>v{VERSION} · Windows</span>
+                <p className={cls.Tagline}>
+                    An unofficial Locket client — desktop widget for Windows
+                </p>
             </div>
+
+            {checking ? (
+                <div className={cls.UpdateStatus}>Checking for updates...</div>
+            ) : hasUpdate ? (
+                <a
+                    className={cls.UpdateBanner}
+                    href="https://github.com/Holozok/luckit/releases/latest"
+                    target="_blank"
+                >
+                    <span className={cls.UpdateDot} />
+                    <span className={cls.UpdateText}>
+                        New version available: <strong>{latestVersion}</strong>
+                    </span>
+                    <span className={cls.UpdateLink}>Download →</span>
+                </a>
+            ) : latestVersion !== null ? (
+                <div className={cls.UpdateStatus + " " + cls.UpToDate}>✓ Up to date</div>
+            ) : null}
+
+            <div className={cls.Features}>
+                {features.map((f, i) => (
+                    <div key={i} className={cls.Feature}>
+                        <span className={cls.FeatureIcon}>{f.icon}</span>
+                        <span>{f.label}</span>
+                    </div>
+                ))}
+            </div>
+
+            <div className={cls.Credits}>
+                <h2>Credits</h2>
+                <div className={cls.Authors}>
+                    <a className={cls.Author} target="_blank" href="https://github.com/michioxd">
+                        <TbBrandGithub />
+                        michioxd
+                        <span className={cls.AuthorRole}>original author</span>
+                    </a>
+                    <a className={cls.Author} target="_blank" href="https://github.com/holozok">
+                        <TbBrandGithub />
+                        Holozok
+                        <span className={cls.AuthorRole}>Windows app</span>
+                    </a>
+                </div>
+                <p className={cls.Sub}>
+                    Released under{" "}
+                    <a target="_blank" href="https://github.com/michioxd/luckit/blob/main/LICENSE">MIT License</a>
+                    {" "}·{" "}
+                    <a target="_blank" href="https://github.com/Holozok/luckit">Source on GitHub</a>
+                </p>
+            </div>
+
             <div className={cls.Disclaimer}>
                 <h2>Disclaimer</h2>
                 <p>
-                    This project is not affiliated with Locket or Locket Labs, Inc in any way. By using this extension, you acknowledge that it is an unofficial Locket client, and you accept the risk that your account may be banned.
-                    <br />
-                    If you're unsure about this or you don't know what you are doing, please refrain from using this extension.
-                    <br />
-                    I (luckit's creator) won't be held responsible for any consequences.
+                    This project is not affiliated with Locket or Locket Labs, Inc. By using this software you acknowledge it is an unofficial client and accept the risk that your account may be banned. The authors are not responsible for any consequences.
                 </p>
             </div>
-            <div className={cls.Bruh}>
-                <div className={cls.Logo}>
-                    <WhatIcon />
-                </div>
-                <p>
-                    Released under <a target="_blank" href="https://github.com/michioxd/luckit/blob/main/LICENSE">MIT License</a>. Source code available on <a target="_blank" href="https://github.com/michioxd/luckit">GitHub</a>.
-                    <br />
-                    Thanks to our <a target="_blank" href="https://github.com/michioxd/luckit/graphs/contributors">contributors</a> for making this project better.
-                    <br />
-                    If you like this project, consider giving it a star on <a target="_blank" href="https://github.com/michioxd/luckit">GitHub</a>.
-                </p>
-                <p>
-                    &copy; {new Date().getFullYear()} <a target="_blank" href="https://github.com/michioxd">michioxd</a> powered.
-                </p>
+
+            <div className={cls.Footer}>
+                &copy; {new Date().getFullYear()} michioxd & Holozok
             </div>
         </div>
-    )
+    );
 }
