@@ -4,57 +4,76 @@
 
 `/ˈlʌkɪt/`
 
-An unofficial Locket extension to work on Chromium-based browser.
+An unofficial Locket client — available as a **Chromium browser extension** and a **Windows desktop widget**.
 
 [![CI status](https://github.com/michioxd/luckit/actions/workflows/test.yaml/badge.svg)](https://github.com/michioxd/luckit/actions/workflows/test.yaml)
 
 ## Disclaimer
 
-This project is not affiliated with Locket or Locket Labs, Inc in any way. By using this extension, you acknowledge that it is an unofficial Locket client, and you accept the risk that your account may be banned.
+This project is not affiliated with Locket or Locket Labs, Inc in any way. By using this software, you acknowledge that it is an unofficial Locket client, and you accept the risk that your account may be banned.
 
-If you're unsure about this or you don't know what you are doing, please refrain from using this extension.
+If you're unsure about this or you don't know what you are doing, please refrain from using it.
 
-I (luckit's creator) won't be held responsible for any consequences.
+The authors won't be held responsible for any consequences.
 
-## Features
+---
 
-- Save moments in background while you using your browser.
-- Upload image.
+## Chrome Extension
 
-## Installation
+### Features
+
+- Save moments in the background while using your browser.
+- Upload images.
+
+### Installation
 
 [![Get it on Google Chrome Web Store](https://github.com/user-attachments/assets/2f324143-0532-45a8-aa87-b4d1afaece79)](https://chromewebstore.google.com/detail/luckit/gkpedjnafgjmkjlcfcgcjonblhjiifmo)
 
-### Install manually
+**Install manually:**
 
-- Download `luckit.chromium.zip` in [Releases page](https://github.com/michioxd/luckit/releases/latest) then extract in anywhere you want.
-- Go to Extensions `chrome://extensions/` then enable Developer mode.
-- Click "Load unpacked", select the `luckit` folder you have extracted.
+- Download `luckit.chromium.zip` from the [Releases page](https://github.com/michioxd/luckit/releases/latest) and extract it anywhere.
+- Go to `chrome://extensions/` and enable Developer mode.
+- Click "Load unpacked" and select the extracted `luckit` folder.
 
-## Development
+---
 
-- Clone this repository
+## Windows Desktop Widget
 
-  ```sh
-  git clone https://github.com/michioxd/luckit
+A always-on-top widget pinned to the bottom-left corner of your screen. Displays your friends' latest Locket moments, sends system notifications on new moments, and minimizes to the system tray.
 
-  # Go to luckit directory
-  cd luckit
-  ```
+### Features
 
-- Install dependencies
+- Displays friends' latest moments (photo/video + caption).
+- System notification when a new moment arrives — click to open the app.
+- Upload images to Locket.
+- Save moments locally.
+- Always-on-top, no titlebar, fixed to bottom-left corner.
+- System tray: Show / Hide / Always on top toggle / Start with Windows / Open data folder / Quit.
+- Hides to tray on close — fully quits only via Tray → Quit.
 
-  ```sh
-  pnpm i
-  ```
+### Installation
 
-- Run development server
+Download the installer from the [Releases page](https://github.com/michioxd/luckit/releases/latest):
 
-  ```sh
-  pnpm run dev
-  ```
+```
+luckit_x.x.x_x64-setup.exe   ← recommended (NSIS installer)
+luckit_x.x.x_x64_en-US.msi
+```
 
-- Click "Load unpacked" in Extensions page, select the `dist` folder.
+### Development
+
+See [GUIDE_EN.md](GUIDE_EN.md) for the full developer guide (setup, project structure, API, Tauri/Rust features, build & packaging).
+
+Requirements: Node.js 18+, pnpm, Rust (stable), Visual Studio C++ Build Tools.
+
+```sh
+git clone https://github.com/michioxd/luckit
+cd luckit
+pnpm install
+pnpm tauri:dev
+```
+
+---
 
 ## Screenshots
 
@@ -64,8 +83,8 @@ I (luckit's creator) won't be held responsible for any consequences.
 
 ## License
 
-All codes are released under [MIT License](LICENSE)
+All code is released under the [MIT License](LICENSE).
 
 ## Credits
 
-Made with love by [michioxd](https://github.com/michioxd) and thanks to all [contributors](https://github.com/michioxd/luckit/graphs/contributors).
+Made with love by [michioxd](https://github.com/michioxd) and [Holozok](https://github.com/holozok), and thanks to all [contributors](https://github.com/michioxd/luckit/graphs/contributors).
