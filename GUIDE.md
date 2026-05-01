@@ -1,31 +1,31 @@
-# Luckit — Hướng dẫn phát triển
+# Luckit — Developer Guide
 
-App desktop widget cho Windows, build bằng **Tauri 2.x** (Rust) + **React + TypeScript + SCSS**.  
-Unofficial client cho Locket — hiển thị moment của bạn bè dưới dạng widget cố định góc trái dưới màn hình.
-
----
-
-## Mục lục
-
-1. [Cài đặt môi trường](#1-cài-đặt-môi-trường)
-2. [Chạy môi trường dev](#2-chạy-môi-trường-dev)
-3. [Cấu trúc project](#3-cấu-trúc-project)
-4. [Chỉnh giao diện](#4-chỉnh-giao-diện)
-5. [Chỉnh API](#5-chỉnh-api)
-6. [Tính năng Tauri (Rust)](#6-tính-năng-tauri-rust)
-7. [Build & đóng gói](#7-build--đóng-gói)
+Windows desktop widget built with **Tauri 2.x** (Rust) + **React + TypeScript + SCSS**.  
+Unofficial Locket client — displays friends' moments as a widget pinned to the bottom-left of the screen.
 
 ---
 
-## 1. Cài đặt môi trường
+## Table of Contents
 
-**Yêu cầu:**
+1. [Environment Setup](#1-environment-setup)
+2. [Running Dev Mode](#2-running-dev-mode)
+3. [Project Structure](#3-project-structure)
+4. [UI Customization](#4-ui-customization)
+5. [API](#5-api)
+6. [Tauri Features (Rust)](#6-tauri-features-rust)
+7. [Build & Packaging](#7-build--packaging)
+
+---
+
+## 1. Environment Setup
+
+**Requirements:**
 - [Node.js](https://nodejs.org) 18+
 - [pnpm](https://pnpm.io) — `npm install -g pnpm`
-- [Rust](https://rustup.rs) — cài qua rustup, toolchain `stable`
-- Visual Studio C++ Build Tools (chọn **Desktop development with C++**)
+- [Rust](https://rustup.rs) — install via rustup, `stable` toolchain
+- Visual Studio C++ Build Tools (select **Desktop development with C++**)
 
-**Cài dependencies:**
+**Install dependencies:**
 
 ```bash
 pnpm install
@@ -33,44 +33,44 @@ pnpm install
 
 ---
 
-## 2. Chạy môi trường dev
+## 2. Running Dev Mode
 
 ```bash
 pnpm tauri:dev
 ```
 
-Widget mở ra ở góc trái dưới màn hình. Mọi thay đổi trong `src/` sẽ **hot-reload** ngay — không cần restart.
+The widget opens at the bottom-left of the screen. Changes in `src/` **hot-reload** instantly — no restart needed.
 
-> Lần đầu Rust compile ~200 crate, mất 2–5 phút. Lần sau chỉ vài giây.
+> First run compiles ~200 Rust crates, taking 2–5 minutes. Subsequent runs take only a few seconds.
 
 ---
 
-## 3. Cấu trúc project
+## 3. Project Structure
 
 ```
 luckit/
 ├── src/
-│   ├── index.scss              ← Style global (màu, font, btn, input, error bar)
-│   ├── main.tsx                ← Entry point React
+│   ├── index.scss              ← Global styles (colors, fonts, buttons, error bar)
+│   ├── main.tsx                ← React entry point
 │   ├── Popup.tsx               ← Root component
 │   ├── MainContext.ts          ← Global state (loggedIn, moments, userData)
 │   ├── const.ts                ← VERSION
 │   ├── screens/
-│   │   ├── Login.tsx           ← Màn hình đăng nhập
-│   │   ├── Global.tsx          ← Layout chính: menu 3 chấm, điều hướng section
-│   │   ├── Main.tsx            ← Feed moments (ảnh/video + caption + user info)
-│   │   ├── Uploader.tsx        ← Upload ảnh lên Locket
-│   │   ├── SavedMoments.tsx    ← Gallery moments đã lưu
-│   │   └── About.tsx           ← Màn hình giới thiệu
+│   │   ├── Login.tsx           ← Login screen
+│   │   ├── Global.tsx          ← Main layout: 3-dot menu, section navigation
+│   │   ├── Main.tsx            ← Moments feed (photo/video + caption + user info)
+│   │   ├── Uploader.tsx        ← Upload photo to Locket
+│   │   ├── SavedMoments.tsx    ← Saved moments gallery
+│   │   └── About.tsx           ← About screen
 │   ├── components/
 │   │   ├── Spinner.tsx
 │   │   ├── Logo.tsx
 │   │   └── PhoneNumber.tsx
 │   ├── services/
-│   │   └── api.ts              ← HTTP calls đến Firebase & Locket API
+│   │   └── api.ts              ← HTTP calls to Firebase & Locket API
 │   ├── lib/
 │   │   ├── store.ts            ← Tauri Store wrapper (persistent storage)
-│   │   └── momentService.ts    ← Background polling, notification, autostart handler
+│   │   └── momentService.ts    ← Background polling, notifications, notification click handler
 │   ├── types/
 │   │   ├── auth.ts
 │   │   ├── moments.ts
@@ -78,37 +78,37 @@ luckit/
 │   └── utils/
 │       └── string.ts
 ├── src-tauri/
-│   ├── tauri.conf.json         ← Cấu hình cửa sổ & app
-│   ├── Cargo.toml              ← Dependencies Rust
+│   ├── tauri.conf.json         ← Window & app configuration
+│   ├── Cargo.toml              ← Rust dependencies
 │   ├── capabilities/
-│   │   └── default.json        ← Permissions cho plugin
+│   │   └── default.json        ← Plugin permissions
 │   └── src/
-│       └── lib.rs              ← Rust entry: tray, window position, autostart
+│       └── lib.rs              ← Rust entry: tray, window positioning, autostart
 └── dist/                       ← Frontend build output (auto-generated)
 ```
 
 ---
 
-## 4. Chỉnh giao diện
+## 4. UI Customization
 
-### 4.1 Màu sắc & font
+### 4.1 Colors & Fonts
 
-Mở `src/index.scss`, phần `:root`:
+Edit `src/index.scss`, `:root` block:
 
 ```scss
 :root {
-    --accent: #C773AF;   /* màu chủ đạo — nút, highlight */
-    --color:  #dadada;   /* màu chữ chính */
+    --accent: #C773AF;   /* primary color — buttons, highlights */
+    --color:  #dadada;   /* main text color */
 }
 ```
 
-**Font đang dùng:**
+**Fonts in use:**
 - **Inter** — body text
-- **Manrope** — heading, nút
+- **Manrope** — headings, buttons
 
-### 4.2 Kích thước widget
+### 4.2 Widget Size
 
-Kích thước hiện tại: **370 × 440 px**. Muốn đổi, sửa **cả hai chỗ**:
+Current size: **370 × 440 px**. To change, update **both locations**:
 
 `src/index.scss`:
 ```scss
@@ -124,7 +124,7 @@ body {
 "height": 440
 ```
 
-### 4.3 Cấu hình cửa sổ
+### 4.3 Window Configuration
 
 `src-tauri/tauri.conf.json` → `app.windows[0]`:
 
@@ -142,35 +142,35 @@ body {
 }
 ```
 
-- `decorations: false` — không có titlebar Windows
-- `transparent: false` — không trong suốt (transparent=true trên Windows khiến click-through bị lỗi)
-- `alwaysOnTop: true` — mặc định bật; có thể toggle qua system tray
-- Vị trí cửa sổ do Rust tự đặt (góc trái dưới) — không set x/y ở đây
+- `decorations: false` — no Windows titlebar
+- `transparent: false` — required on Windows; transparent windows break mouse event handling
+- `alwaysOnTop: true` — on by default; toggleable via system tray
+- Window position is set by Rust at startup (bottom-left) — do not set x/y here
 
-### 4.4 Thêm menu item vào menu 3 chấm
+### 4.4 Adding a Menu Item
 
-Mở `src/screens/Global.tsx`, tìm khối `<Menu>` và thêm `<MenuItem>`:
+Open `src/screens/Global.tsx`, find the `<Menu>` block and add a `<MenuItem>`:
 
 ```tsx
-<MenuItem onClick={() => { /* xử lý */ }} className={menuItemClassName}>
+<MenuItem onClick={() => { /* handler */ }} className={menuItemClassName}>
     <MdRefresh />
-    Tên item
+    Item label
 </MenuItem>
 ```
 
-Import icon từ `react-icons` — xem tại [react-icons.github.io](https://react-icons.github.io/react-icons).
+Browse icons at [react-icons.github.io](https://react-icons.github.io/react-icons).
 
 ---
 
-## 5. Chỉnh API
+## 5. API
 
-### 5.1 Thêm một API call mới
+### 5.1 Adding a New API Call
 
-Mở `src/services/api.ts`, thêm vào object `API`:
+Open `src/services/api.ts`, add to the `API` object:
 
 ```ts
 export const API = {
-    // ... hàm có sẵn ...
+    // ... existing functions ...
 
     getFriends: (token?: string) => fetchLocket<FriendsResponseType>({
         endpoint: "getFriends",
@@ -181,18 +181,18 @@ export const API = {
 }
 ```
 
-Hai helper:
+Two helper functions:
 
-| Hàm | Dùng cho |
+| Function | Used for |
 |---|---|
 | `fetchFirebase(...)` | Google Identity Toolkit, Firebase Auth, Securetoken |
 | `fetchLocket(...)` | `api.locketcamera.com/*` |
 
-> **Lưu ý:** Các HTTP call trong Uploader dùng `fetch` từ `@tauri-apps/plugin-http` (không phải browser fetch) để bypass CORS của WebView2. Nếu thêm call ra domain mới trong Uploader, kiểm tra `src-tauri/capabilities/default.json` → scope `http:default`.
+> **Note:** HTTP calls inside Uploader use `fetch` from `@tauri-apps/plugin-http` (not the browser fetch) to bypass WebView2 CORS restrictions. If you add calls to new domains in Uploader, update the `http:default` scope in `src-tauri/capabilities/default.json`.
 
-### 5.2 Đọc/ghi dữ liệu lưu trữ
+### 5.2 Reading & Writing Persistent Data
 
-Dùng `src/lib/store.ts`:
+Use `src/lib/store.ts`:
 
 ```ts
 import { storeGet, storeSet, storeDelete } from '../lib/store'
@@ -202,102 +202,102 @@ await storeSet('token', 'abc123')
 await storeDelete('token')
 ```
 
-**Các key đang dùng:**
+**Keys in use:**
 
-| Key | Kiểu | Nội dung |
+| Key | Type | Contents |
 |---|---|---|
-| `token` | `string` | Firebase ID token (hết hạn sau 1h) |
+| `token` | `string` | Firebase ID token (expires after 1h) |
 | `refreshToken` | `string` | Firebase refresh token |
-| `user` | `UserType` | Thông tin tài khoản |
-| `moments` | `SavedMomentType[]` | Danh sách moments đã lưu |
-| `lastMD5` | `string` | MD5 của moment mới nhất (tránh duplicate) |
+| `user` | `UserType` | Account information |
+| `moments` | `SavedMomentType[]` | Saved moments list |
+| `lastMD5` | `string` | MD5 of latest moment (deduplication) |
 
-File lưu tại: `%APPDATA%\com.locket.widget\locket-widget.json`
+Data file location: `%APPDATA%\com.locket.widget\locket-widget.json`
 
-### 5.3 Polling & notification
+### 5.3 Polling & Notifications
 
-`src/lib/momentService.ts` poll API mỗi **25 giây**. Khi phát hiện moment mới:
-1. Lưu vào store
-2. Gửi **system notification** (tên user + caption)
-3. Click vào notification → app tự hiện ra
+`src/lib/momentService.ts` polls the API every **25 seconds**. When a new moment is detected:
+1. Saves to store
+2. Sends a **system notification** (username + caption)
+3. Clicking the notification → app shows and focuses
 
 ```ts
 import { startMomentPolling, stopMomentPolling, onNewMoment } from '../lib/momentService'
 
-startMomentPolling()   // gọi khi đăng nhập
-stopMomentPolling()    // gọi khi logout
+startMomentPolling()   // call on login
+stopMomentPolling()    // call on logout
 
-// Lắng nghe moment mới từ component
+// Listen for new moments from any component
 const unsub = onNewMoment((moments) => { ... })
-return unsub  // cleanup khi unmount
+return unsub  // cleanup on unmount
 ```
 
-Đổi tần suất polling (dòng cuối trong `momentService.ts`):
+To change the polling interval (last line of `momentService.ts`):
 ```ts
-loopTimer = setTimeout(loop, 25_000)  // ← đổi số này
+loopTimer = setTimeout(loop, 25_000)  // ← change this value
 ```
 
-### 5.4 Upload ảnh — luồng
+### 5.4 Image Upload Flow
 
-Logic trong `src/screens/Uploader.tsx`, hàm `handleUploadImage`:
+Logic in `src/screens/Uploader.tsx`, function `handleUploadImage`:
 
 ```
 1. Refresh token
         ↓
-2. POST Firebase Storage → lấy X-Goog-Upload-URL    [lỗi → [2]]
+2. POST Firebase Storage → get X-Goog-Upload-URL         [error → [2]]
         ↓
-3. PUT file lên upload URL                           [lỗi → [4]]
+3. PUT file to upload URL                                 [error → [4]]
         ↓
-4. GET download token từ Firebase Storage            [lỗi → [5]/[6]]
+4. GET download token from Firebase Storage               [error → [5]/[6]]
         ↓
-5. POST api.locketcamera.com/postMomentV2            [lỗi → [7]]
+5. POST api.locketcamera.com/postMomentV2                 [error → [7]]
 ```
 
-Ảnh convert sang **WebP 1020×1020** (canvas) trước khi upload. Mã lỗi `[0]`–`[7]` hiển thị trên UI để debug.
+Images are converted to **WebP 1020×1020** (via canvas) before upload. Error codes `[0]`–`[7]` are displayed in the UI for debugging.
 
 ---
 
-## 6. Tính năng Tauri (Rust)
+## 6. Tauri Features (Rust)
 
-Tất cả nằm trong `src-tauri/src/lib.rs`.
+Everything lives in `src-tauri/src/lib.rs`.
 
-### 6.1 Vị trí cửa sổ
+### 6.1 Window Positioning
 
-Rust tự tính và đặt cửa sổ ở **góc trái dưới** khi khởi động:
+Rust calculates and places the window at the **bottom-left** of the primary monitor on startup:
 
 ```rust
 let y = (screen_h - win_h) as i32;
 window.set_position(PhysicalPosition::new(0, y));
 ```
 
-Widget không drag được — Windows transparent không nhận mouse event đúng cách, nên dùng vị trí cố định thay thế.
+Dragging is not supported — Windows does not reliably send mouse events on non-transparent areas of a frameless window. Fixed positioning is used instead.
 
-### 6.2 System tray
+### 6.2 System Tray
 
-Tray icon có menu:
+The tray icon provides a context menu:
 
-| Item | Loại | Chức năng |
+| Item | Type | Action |
 |---|---|---|
-| Show | MenuItem | Hiện cửa sổ + focus |
-| Hide | MenuItem | Ẩn cửa sổ |
-| Always on top | CheckMenuItem | Toggle alwaysOnTop |
-| Start with Windows | CheckMenuItem | Toggle autostart (Windows registry) |
-| Open data folder | MenuItem | Mở `%APPDATA%\com.locket.widget\` |
-| Quit | MenuItem | Thoát app |
+| Show | MenuItem | Show window + focus |
+| Hide | MenuItem | Hide window |
+| Always on top | CheckMenuItem | Toggle `set_always_on_top` (default: on) |
+| Start with Windows | CheckMenuItem | Toggle autostart via Windows registry |
+| Open data folder | MenuItem | Open `%APPDATA%\com.locket.widget\` in Explorer |
+| Quit | MenuItem | `app.exit(0)` |
 
-Click trái vào tray icon → Show cửa sổ.
+Left-clicking the tray icon shows the window.
 
-### 6.3 Đóng cửa sổ
+### 6.3 Close Button Behavior
 
-Nhấn X hoặc `Alt+F4` → **ẩn xuống tray**, không thoát hẳn. Muốn thoát thật: Tray → Quit.
+Pressing X or `Alt+F4` **hides the window to the tray** — it does not quit. To fully quit: Tray → Quit.
 
 ### 6.4 Autostart
 
-Dùng `tauri-plugin-autostart` — ghi vào Windows registry `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`. Toggle qua tray, trạng thái ban đầu đọc từ registry.
+Uses `tauri-plugin-autostart` — writes to `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`. Toggled via tray; initial state is read from the registry on startup.
 
-### 6.5 Permissions (capabilities)
+### 6.5 Plugin Permissions
 
-`src-tauri/capabilities/default.json` — thêm permission ở đây nếu plugin báo lỗi scope:
+`src-tauri/capabilities/default.json` — add permissions here if a plugin reports a scope error:
 
 ```json
 {
@@ -308,9 +308,9 @@ Dùng `tauri-plugin-autostart` — ghi vào Windows registry `HKCU\Software\Micr
 
 ---
 
-## 7. Build & đóng gói
+## 7. Build & Packaging
 
-### 7.1 Build production
+### 7.1 Production Build
 
 ```bash
 pnpm tauri:build
@@ -319,13 +319,13 @@ pnpm tauri:build
 Output:
 ```
 src-tauri/target/release/bundle/
-├── nsis/luckit_x.x.x_x64-setup.exe   ← Installer NSIS (khuyên dùng)
+├── nsis/luckit_x.x.x_x64-setup.exe   ← NSIS installer (recommended)
 └── msi/luckit_x.x.x_x64_en-US.msi
 ```
 
-### 7.2 Đổi version
+### 7.2 Changing the Version
 
-Sửa **3 chỗ**:
+Update **3 places**:
 
 ```
 src/const.ts                → export const VERSION = '0.2.0'
@@ -333,27 +333,27 @@ package.json                → "version": "0.2.0"
 src-tauri/tauri.conf.json   → "version": "0.2.0"
 ```
 
-### 7.3 Đổi icon app
+### 7.3 Changing the App Icon
 
 ```bash
 pnpm tauri icon path/to/icon.png
 ```
 
-File PNG vuông tối thiểu **1024×1024px**. Lệnh tự tạo toàn bộ kích thước vào `src-tauri/icons/`.
+Provide a square PNG at least **1024×1024px**. The command generates all required sizes into `src-tauri/icons/`.
 
-### 7.4 Chỉ build frontend
+### 7.4 Frontend-Only Build
 
 ```bash
 pnpm build
 ```
 
-Output vào `dist/` — kiểm tra bundle size hoặc debug CSS.
+Output goes to `dist/` — useful for checking bundle size or debugging CSS.
 
 ---
 
-## Ghi chú
+## Notes
 
-- App này **không chính thức**, không liên kết với Locket Labs, Inc.
-- Firebase AppCheck token trong `src/services/api.ts` có thể hết hạn — nếu login lỗi 403, cần cập nhật token.
-- Tauri store lưu tại: `%APPDATA%\com.locket.widget\locket-widget.json`
-- `transparent: false` là bắt buộc trên Windows — transparent window không nhận mouse event ở vùng trong suốt.
+- This app is **unofficial** and is not affiliated with Locket Labs, Inc.
+- The Firebase AppCheck token in `src/services/api.ts` may expire — if login returns 403, the token needs to be updated.
+- Persistent data is stored at: `%APPDATA%\com.locket.widget\locket-widget.json`
+- `transparent: false` is required on Windows — transparent windows do not receive mouse events in transparent regions, breaking all click interactions.

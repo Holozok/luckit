@@ -1,5 +1,3 @@
-**English 🇺🇸** | [Tiếng Việt 🇻🇳](README.vi.md)
-
 # luckit
 
 `/ˈlʌkɪt/`
@@ -45,7 +43,7 @@ A always-on-top widget pinned to the bottom-left corner of your screen. Displays
 
 - Displays friends' latest moments (photo/video + caption).
 - System notification when a new moment arrives — click to open the app.
-- Upload images to Locket.
+- Upload moments to Locket.
 - Save moments locally.
 - Always-on-top, no titlebar, fixed to bottom-left corner.
 - System tray: Show / Hide / Always on top toggle / Start with Windows / Open data folder / Quit.
@@ -53,7 +51,7 @@ A always-on-top widget pinned to the bottom-left corner of your screen. Displays
 
 ### Installation
 
-Download the installer from the [Releases page](https://github.com/michioxd/luckit/releases/latest):
+Download the installer from the [Releases page](https://github.com/Holozok/luckit/releases/latest):
 
 ```
 luckit_x.x.x_x64-setup.exe   ← recommended (NSIS installer)
@@ -62,12 +60,12 @@ luckit_x.x.x_x64_en-US.msi
 
 ### Development
 
-See [GUIDE_EN.md](GUIDE_EN.md) for the full developer guide (setup, project structure, API, Tauri/Rust features, build & packaging).
+See [GUIDE.md](GUIDE.md) for the full developer guide (setup, project structure, API, Tauri/Rust features, build & packaging).
 
 Requirements: Node.js 18+, pnpm, Rust (stable), Visual Studio C++ Build Tools.
 
 ```sh
-git clone https://github.com/michioxd/luckit
+git clone https://github.com/Holozok/luckit
 cd luckit
 pnpm install
 pnpm tauri:dev
