@@ -53,7 +53,7 @@ A always-on-top widget pinned to the bottom-left corner of your screen. Displays
 
 ### Installation
 
-Download the installer from the [Releases page](https://github.com/michioxd/luckit/releases/latest):
+Download the installer from the [Releases page](https://github.com/Holozok/luckit/releases/latest):
 
 ```
 luckit_x.x.x_x64-setup.exe   ← recommended (NSIS installer)
@@ -87,4 +87,4 @@ All code is released under the [MIT License](LICENSE).
 
 ## Credits
 
-Made with love by [michioxd](https://github.com/michioxd) and [Holozok](https://github.com/holozok), and thanks to all [contributors](https://github.com/michioxd/luckit/graphs/contributors).
+Made with love by [michioxd](https://github.com/michioxd) and [Holozok](https://github.com/holozok), and thanks to all [contributors](https://github.com/Holozok/luckit/graphs/contributors).
