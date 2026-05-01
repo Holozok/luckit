@@ -1,4 +1,3 @@
-use std::sync::Mutex;
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -7,31 +6,9 @@ use tauri::{
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_autostart::ManagerExt;
 
-struct AotState(Mutex<bool>);
-
-#[tauri::command]
-fn show_main_window(app: tauri::AppHandle, state: tauri::State<AotState>) {
-    let aot_was_on = *state.0.lock().unwrap();
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.set_always_on_top(true);
-        let _ = window.show();
-        let _ = window.unminimize();
-        let _ = window.set_focus();
-        if !aot_was_on {
-            let window_clone = window.clone();
-            std::thread::spawn(move || {
-                std::thread::sleep(std::time::Duration::from_millis(300));
-                let _ = window_clone.set_always_on_top(false);
-            });
-        }
-    }
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .manage(AotState(Mutex::new(true)))
-        .invoke_handler(tauri::generate_handler![show_main_window])
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -61,7 +38,7 @@ pub fn run() {
                 if let Ok(Some(monitor)) = window.primary_monitor() {
                     let scale = monitor.scale_factor();
                     let screen_h = monitor.size().height as f64;
-                    let win_h = 440.0 * scale;
+                    let win_h = 640.0 * scale;
                     let y = (screen_h - win_h) as i32;
                     let _ = window.set_position(tauri::PhysicalPosition::new(0, y));
                 }
@@ -93,7 +70,6 @@ pub fn run() {
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.set_always_on_top(checked);
                         }
-                        *app.state::<AotState>().0.lock().unwrap() = checked;
                     }
                     "autostart" => {
                         let checked = autostart_for_handler.is_checked().unwrap_or(false);

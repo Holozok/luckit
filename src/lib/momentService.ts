@@ -1,6 +1,5 @@
 import { md5 } from 'js-md5';
-import { isPermissionGranted, requestPermission, sendNotification, onAction, registerActionTypes } from '@tauri-apps/plugin-notification';
-import { invoke } from '@tauri-apps/api/core';
+import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
 import { API } from '../services/api';
 import { SavedMomentType } from '../types/moments';
 import { UserType } from '../types/user';
@@ -12,7 +11,6 @@ type LogoutCallback = () => void;
 let momentCallbacks: MomentCallback[] = [];
 let logoutCallbacks: LogoutCallback[] = [];
 let loopTimer: ReturnType<typeof setTimeout> | null = null;
-let actionHandlerRegistered = false;
 
 export function onNewMoment(cb: MomentCallback): () => void {
     momentCallbacks.push(cb);
@@ -48,7 +46,7 @@ async function pushSystemNotification(moment: SavedMomentType): Promise<void> {
             ? moment.caption
             : hasVideo ? 'Sent a new video moment' : 'Sent a new moment';
 
-        sendNotification({ title, body, actionTypeId: 'moment-click' });
+        sendNotification({ title, body });
     } catch {
         // silently ignore notification errors
     }
@@ -142,15 +140,6 @@ export async function logout(): Promise<void> {
 }
 
 export function startMomentPolling(): void {
-    if (!actionHandlerRegistered) {
-        actionHandlerRegistered = true;
-        registerActionTypes([{ id: 'moment-click', actions: [] }]).catch(() => {});
-        onAction(async () => {
-            try {
-                await invoke('show_main_window');
-            } catch { /* ignore */ }
-        }).catch(() => {});
-    }
     if (loopTimer !== null) return;
     const loop = async () => {
         try { await fetchLatestMoment(); } catch { /* empty */ }
