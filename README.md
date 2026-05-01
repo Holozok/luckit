@@ -85,4 +85,4 @@ All code is released under the [MIT License](LICENSE).
 
 ## Credits
 
-Made with love by [michioxd](https://github.com/michioxd) and [Holozok](https://github.com/holozok), and thanks to all [contributors](https://github.com/michioxd/luckit/graphs/contributors).
+Made with love by [michioxd](https://github.com/michioxd) and [Holozok](https://github.com/holozok), and thanks to all [contributors](https://github.com/Holozok/luckit/graphs/contributors).
